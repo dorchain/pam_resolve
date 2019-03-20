@@ -1,0 +1,17 @@
+pam_resolve
+===========
+
+Tries to resolve the rhost field in the pam stack
+
+Intended use is with pam_access, where the application does not resolve
+the remote address.
+
+Debug with pam_warn.
+
+Sample usage 
+
+auth required pam_warn.so # shows rhost numeric
+auth required pam_resolve.so # tries to resolve the rhost field
+auth required pam_warn.so # shows rhost name now
+auth required pam_access.so # now works with hostnames
+
