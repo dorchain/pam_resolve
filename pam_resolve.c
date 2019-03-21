@@ -42,6 +42,7 @@ if ((retval = pam_get_item (pamh, PAM_RHOST, (const void **) &rhost)) != PAM_SUC
 memset(&hints, 0, sizeof(hints));
 hints.ai_flags = AI_NUMERICHOST;
 hints.ai_family = AF_UNSPEC;
+hints.ai_socktype = SOCK_STREAM; /* we only want one result back */
 if ((retval = getaddrinfo(rhost, NULL, &hints, &res))) {
 	pam_syslog (pamh, LOG_DEBUG, "rhost %s is not a numeric IP: %s", (rhost == NULL) ? "<NULL>" : rhost, gai_strerror(retval));
 	return PAM_SUCCESS;
