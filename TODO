@@ -1,0 +1,4 @@
+- command line parsing (debug)
+- handle flags (PAM_SILENT)
+
+Check with tcpwrappers, maybe rename to pam_tcpwrap?
