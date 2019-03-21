@@ -16,7 +16,7 @@
 #define PAM_SM_ACCOUNT
 #include <security/pam_modules.h>
 
-int resolve_rhost(pam_handle_t *pamh, 	 
+static int resolve_rhost(pam_handle_t *pamh, 	 
 	int flags, 	 
 	int argc, 	 
 	const char **argv)
@@ -70,5 +70,5 @@ PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh,
  	int argc, 	 
  	const char **argv)
 {
-	return (PAM_SUCCESS);
+	return (PAM_IGNORE);
 }
