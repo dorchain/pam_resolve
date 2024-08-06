@@ -35,9 +35,19 @@ char *ap = NULL, *rap = NULL;
 int alen;
 int silent;
 int debug;
+int i;
 
 silent = flags & PAM_SILENT;
 debug = !silent;
+
+for (i = 0; i < argc; i++) {
+	if (strcmp (argv[i], "debug") == 0) {
+		debug = 1;
+	} else {
+		pam_syslog(pamh, LOG_ERR, "unrecognized option [%s]", argv[i]);
+	}
+}
+
 if ((retval = pam_get_item (pamh, PAM_RHOST, (const void **) &rhost)) != PAM_SUCCESS) {
 	if (!silent) pam_syslog (pamh, LOG_ERR, "get rhost failed: %s", pam_strerror (pamh, retval));
 	return retval;
