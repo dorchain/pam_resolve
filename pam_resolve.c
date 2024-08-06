@@ -70,6 +70,8 @@ if (swap) {
 		if (debug) pam_syslog (pamh, LOG_DEBUG, "restoring rhost from old_rhost to %s", (old_rhost == NULL) ? "<NULL>" : old_rhost);
 		/* finish here */
 		return pam_set_item(pamh, PAM_RHOST, old_rhost);
+	} else {
+		if (debug) pam_syslog (pamh, LOG_DEBUG, "cannot get old_rhost: %s", pam_strerror (pamh, retval));
 	}
 }
 
@@ -89,6 +91,11 @@ if (debug) pam_syslog (pamh, LOG_DEBUG, "saving old_rhost as %s", (old_rhost == 
 if ((retval = pam_set_data (pamh, resolv_old_rhost, (void *) old_rhost, rhost_cleanup)) != PAM_SUCCESS) {
 	if (!silent) pam_syslog (pamh, LOG_ERR, "set_data rhost failed: %s", pam_strerror (pamh, retval));
 	return retval;
+}
+
+if (rhost == NULL) {
+	/* stop here */
+	return PAM_SUCCESS;
 }
 
 memset(&hints, 0, sizeof(hints));
