@@ -1,4 +1,3 @@
-- command line parsing (debug)
 - differentiate return codes
 
 Check with tcpwrappers, maybe rename to pam_tcpwrap?
