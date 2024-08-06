@@ -13,11 +13,24 @@
 #include <stddef.h>
 #include <syslog.h>
 #include <string.h>
+#include <stdlib.h>
 
 #define PAM_SM_AUTH
 #define PAM_SM_ACCOUNT
 #include <security/pam_modules.h>
 #include <security/pam_ext.h>
+
+static const char *resolv_old_rhost = "resolv_old_rhost";
+static void rhost_cleanup(pam_handle_t *pamh,
+	void *data,
+	int error_status)
+{
+char *rhost = data;
+if (rhost != NULL) {
+	while (*rhost) *rhost++ = '\0';
+}
+free(data);
+}
 
 static int resolve_rhost(pam_handle_t *pamh, 	 
 	int flags, 	 
@@ -26,6 +39,7 @@ static int resolve_rhost(pam_handle_t *pamh,
 {
 int retval;
 const char *rhost = NULL;
+const char *old_rhost = NULL;
 struct addrinfo *res = NULL;
 struct addrinfo *res0 = NULL;
 struct addrinfo *rp = NULL;
@@ -35,6 +49,7 @@ char *ap = NULL, *rap = NULL;
 int alen;
 int silent;
 int debug;
+int swap = 0;
 int i;
 
 silent = flags & PAM_SILENT;
@@ -43,13 +58,36 @@ debug = !silent;
 for (i = 0; i < argc; i++) {
 	if (strcmp (argv[i], "debug") == 0) {
 		debug = 1;
+	} else if (strcmp (argv[i], "swap_rhost") == 0) {
+		swap = 1;
 	} else {
 		pam_syslog(pamh, LOG_ERR, "unrecognized option [%s]", argv[i]);
 	}
 }
 
+if (swap) {
+	if ((retval = pam_get_data (pamh, resolv_old_rhost, (const void **) &old_rhost)) == PAM_SUCCESS) {
+		if (debug) pam_syslog (pamh, LOG_DEBUG, "restoring rhost from old_rhost to %s", (old_rhost == NULL) ? "<NULL>" : old_rhost);
+		/* finish here */
+		return pam_set_item(pamh, PAM_RHOST, old_rhost);
+	}
+}
+
 if ((retval = pam_get_item (pamh, PAM_RHOST, (const void **) &rhost)) != PAM_SUCCESS) {
 	if (!silent) pam_syslog (pamh, LOG_ERR, "get rhost failed: %s", pam_strerror (pamh, retval));
+	return retval;
+}
+if (rhost != NULL) {
+	if ((old_rhost = strdup(rhost)) == NULL) {
+		if (!silent) pam_syslog (pamh, LOG_ERR, "strdup rhost failed");
+		return PAM_BUF_ERR;
+	}
+} else {
+	old_rhost = NULL;
+}
+if (debug) pam_syslog (pamh, LOG_DEBUG, "saving old_rhost as %s", (old_rhost == NULL) ? "<NULL>" : old_rhost);
+if ((retval = pam_set_data (pamh, resolv_old_rhost, (void *) old_rhost, rhost_cleanup)) != PAM_SUCCESS) {
+	if (!silent) pam_syslog (pamh, LOG_ERR, "set_data rhost failed: %s", pam_strerror (pamh, retval));
 	return retval;
 }
 
